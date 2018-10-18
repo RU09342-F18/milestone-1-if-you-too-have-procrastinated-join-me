@@ -6,8 +6,8 @@
  * Date: 10/17/18
  */
 
-char size;
-char count;
+char size = 0;
+char count = 0;
 
 void main(void)
 {
@@ -68,12 +68,16 @@ __interrupt void USCI0RX_ISR(void)
    // if this is the first byte received
    if(count == 0)
    {
-      size = byte;                  // the number bytes expected is set to the value received
-      count = byte;                 // keeps track of number of bytes processed/remaining
+      size = byte + 1;                  // the number bytes expected is set to the value received
+      count = byte + 1;                 // keeps track of number of bytes processed/remaining
       // if there is enough data for the next node
-      if(byte >= 8)
+      if(byte >= 6)
       {
          UCA0TXBUF = byte - 3;      // send the number of bytes the next node should expect
+      }
+      else
+      {
+          UCA0TXBUF = 0x00;         // send the number of bytes the next node should expect
       }
    }
    // if this is the second byte received
@@ -95,9 +99,23 @@ __interrupt void USCI0RX_ISR(void)
    else
    {
       // and there are enough bytes to send to the next node
-      if(size >= 8)
+      if(size >= 6)
       {
          UCA0TXBUF = byte;          // send the remaining bytes to the next node
+      }
+      else
+      {
+          size = byte + 1;                  // the number bytes expected is set to the value received
+          count = byte + 1;                 // keeps track of number of bytes processed/remaining
+          // if there is enough data for the next node
+          if(byte >= 6)
+          {
+             UCA0TXBUF = byte - 3;      // send the number of bytes the next node should expect
+          }
+          else
+          {
+             UCA0TXBUF = 0x00;          // send the number of bytes the next node should expect
+          }
       }
    }
    count -= 1;                      // keep track of number of bytes processed/remaining
